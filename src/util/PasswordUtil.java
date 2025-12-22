@@ -1,17 +1,20 @@
 package util;
 
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 
 public class PasswordUtil {
 
-    public static byte[] hashPassword(String password, String salt) {
+    public static byte[] hash(String password, String salt) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
-            md.update((password + salt).getBytes("UTF-16LE"));
-            return md.digest();
+            String input = password + salt;
+
+            // ⚠️ Quan trọng: dùng UTF-16LE để khớp NVARCHAR của SQL Server
+            return md.digest(input.getBytes(Charset.forName("UTF-16LE")));
+
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-        return null;
     }
 }

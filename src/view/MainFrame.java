@@ -18,11 +18,51 @@ public class MainFrame extends JFrame {
         setLocationRelativeTo(null);
 
         JMenuBar bar = new JMenuBar();
+        
+     // ===== Menu System =====
+        JMenu menuSystem = new JMenu("Hệ thống");
+        JMenuItem miLogout = new JMenuItem("Đăng xuất");
+        JMenuItem miExit = new JMenuItem("Thoát");
+
+        menuSystem.add(miLogout);
+        menuSystem.add(miExit);
+        
+        miLogout.addActionListener(e -> {
+            int c = JOptionPane.showConfirmDialog(this,
+                    "Bạn có chắc muốn đăng xuất?",
+                    "Xác nhận",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (c == JOptionPane.YES_OPTION) {
+                new LoginFrame().setVisible(true);
+                this.dispose(); // đóng MainFrame
+            }
+        });
+
+        miExit.addActionListener(e -> {
+            int c = JOptionPane.showConfirmDialog(this,
+                    "Bạn có chắc muốn thoát chương trình?",
+                    "Xác nhận",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (c == JOptionPane.YES_OPTION) {
+                System.exit(0);
+            }
+        });
+
+
 
         // ===== Menu Admin =====
         menuAdmin = new JMenu("Tài khoản");
         JMenuItem miAccount = new JMenuItem("Quản lý tài khoản");
         menuAdmin.add(miAccount);
+        JMenuItem miReset = new JMenuItem("Reset mật khẩu");
+        menuAdmin.add(miReset);
+
+        miReset.addActionListener(e -> {
+            new ResetPasswordFrame().setVisible(true);
+        });
+        
 
         miAccount.addActionListener(evt -> {
             new AccountFrame().setVisible(true);
@@ -65,11 +105,13 @@ public class MainFrame extends JFrame {
         });
 
         // ===== Add menu vào bar =====
+        bar.add(menuSystem);
         bar.add(menuCategory);
         bar.add(menuSearch);
         bar.add(menuBusiness);
         bar.add(menuProduct);
         bar.add(menuAdmin);
+        
 
         setJMenuBar(bar);
 

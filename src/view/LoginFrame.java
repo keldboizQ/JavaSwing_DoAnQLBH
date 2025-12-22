@@ -34,8 +34,9 @@ public class LoginFrame extends JFrame {
 
     private void login() {
 
-        String email = txtEmail.getText();
-        String password = new String(txtPass.getPassword());
+    	String email = txtEmail.getText().trim();
+    	String password = new String(txtPass.getPassword()).trim();
+
 
         AccountDAO dao = new AccountDAO();
         Account acc = dao.login(email, password);

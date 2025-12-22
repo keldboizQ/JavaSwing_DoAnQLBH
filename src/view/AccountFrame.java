@@ -76,6 +76,13 @@ public class AccountFrame extends JFrame {
         JButton btnAdd = new JButton("Thêm");
         JButton btnUpdate = new JButton("Sửa quyền");
         JButton btnDelete = new JButton("Xoá");
+        JButton btnReset = new JButton("Reset MK");
+        btnReset.setBounds(350, 20, 100, 30);
+        add(btnReset);
+
+        btnReset.addActionListener(e -> resetPassword());
+
+
 
         btnAdd.setBounds(350, 60, 100, 30);
         btnUpdate.setBounds(350, 100, 100, 30);
@@ -158,4 +165,26 @@ public class AccountFrame extends JFrame {
         dao.delete(id);
         loadTable();
     }
+    
+    private void resetPassword() {
+
+        if (txtId.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Chọn tài khoản cần reset!");
+            return;
+        }
+
+        String newPass = JOptionPane.showInputDialog(this,
+                "Nhập mật khẩu mới:");
+
+        if (newPass == null || newPass.isEmpty()) return;
+
+        int id = Integer.parseInt(txtId.getText());
+
+        dao.resetPassword(id, newPass);
+
+        JOptionPane.showMessageDialog(this,
+                "Reset mật khẩu thành công!");
+    }
+
+
 }
