@@ -9,15 +9,15 @@ public class Product {
     private int stock;
     private int categoryId;
     private int brandId;
+    private String imagePath;
 
-    public Product() {
-    }
+    public Product() {}
 
     public int getId() {
         return id;
     }
 
-    public void setId(int id) {            // id_product
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -25,7 +25,7 @@ public class Product {
         return name;
     }
 
-    public void setName(String name) {     // name_product
+    public void setName(String name) {
         this.name = name;
     }
 
@@ -33,7 +33,7 @@ public class Product {
         return description;
     }
 
-    public void setDescription(String description) { // description
+    public void setDescription(String description) {
         this.description = description;
     }
 
@@ -41,7 +41,7 @@ public class Product {
         return price;
     }
 
-    public void setPrice(double price) {   // price
+    public void setPrice(double price) {
         this.price = price;
     }
 
@@ -49,7 +49,7 @@ public class Product {
         return stock;
     }
 
-    public void setStock(int stock) {       // stock
+    public void setStock(int stock) {
         this.stock = stock;
     }
 
@@ -57,7 +57,7 @@ public class Product {
         return categoryId;
     }
 
-    public void setCategoryId(int categoryId) { // id_category
+    public void setCategoryId(int categoryId) {
         this.categoryId = categoryId;
     }
 
@@ -65,14 +65,20 @@ public class Product {
         return brandId;
     }
 
-    public void setBrandId(int brandId) {   // id_brand
+    public void setBrandId(int brandId) {
         this.brandId = brandId;
     }
-    
-    @Override
-    public String toString() {
-        return name;  // hiển thị tên sản phẩm trên combobox
+
+    public String getImagePath() {
+        return imagePath;
     }
 
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }
-	

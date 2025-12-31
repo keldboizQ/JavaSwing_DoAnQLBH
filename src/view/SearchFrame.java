@@ -2,10 +2,10 @@ package view;
 
 import java.text.NumberFormat;
 import java.util.Locale;
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.util.List;
+import java.awt.Image;
 
 import dao.ProductDAO;
 import dao.CategoryDAO;
@@ -22,17 +22,18 @@ public class SearchFrame extends JFrame {
     private JTable table;
     private DefaultTableModel tableModel;
 
+    private JLabel lblImage;
+
     private ProductDAO productDAO = new ProductDAO();
     private CategoryDAO categoryDAO = new CategoryDAO();
     private BrandDAO brandDAO = new BrandDAO();
-    
+
     private NumberFormat vnFormat =
             NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
 
-
     public SearchFrame() {
         setTitle("Tra cứu sản phẩm");
-        setSize(700, 450);
+        setSize(900, 450);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(null);
@@ -42,7 +43,6 @@ public class SearchFrame extends JFrame {
         search();
     }
 
-    // ================= UI =================
     private void initUI() {
 
         JLabel lblKey = new JLabel("Tên SP:");
@@ -66,23 +66,29 @@ public class SearchFrame extends JFrame {
         btnSearch.setBounds(330, 20, 100, 30);
 
         tableModel = new DefaultTableModel(
-            new Object[]{"ID", "Tên", "Giá", "Tồn kho"}, 0
+                new Object[]{"ID", "Tên", "Giá", "Tồn kho"}, 0
         );
         table = new JTable(tableModel);
 
         JScrollPane scroll = new JScrollPane(table);
-        scroll.setBounds(20, 150, 650, 240);
+        scroll.setBounds(20, 150, 520, 240);
+
+        lblImage = new JLabel("Không có ảnh", SwingConstants.CENTER);
+        lblImage.setBorder(BorderFactory.createEtchedBorder());
+        lblImage.setBounds(560, 150, 300, 240);
 
         add(lblKey); add(txtKeyword);
         add(lblCat); add(cboCategory);
         add(lblBrand); add(cboBrand);
         add(btnSearch);
         add(scroll);
+        add(lblImage);
 
         btnSearch.addActionListener(e -> search());
+
+        table.getSelectionModel().addListSelectionListener(e -> showImage());
     }
 
-    // ================= LOAD COMBO =================
     private void loadCombo() {
 
         cboCategory.addItem(null);
@@ -96,10 +102,11 @@ public class SearchFrame extends JFrame {
         }
     }
 
-    // ================= SEARCH =================
     private void search() {
 
         tableModel.setRowCount(0);
+        lblImage.setIcon(null);
+        lblImage.setText("Không có ảnh");
 
         String keyword = txtKeyword.getText();
         Category c = (Category) cboCategory.getSelectedItem();
@@ -108,9 +115,7 @@ public class SearchFrame extends JFrame {
         Integer categoryId = (c == null) ? null : c.getId();
         Integer brandId = (b == null) ? null : b.getId();
 
-        List<Product> list = productDAO.search(
-                keyword, categoryId, brandId
-        );
+        List<Product> list = productDAO.search(keyword, categoryId, brandId);
 
         for (Product p : list) {
             tableModel.addRow(new Object[]{
@@ -119,6 +124,37 @@ public class SearchFrame extends JFrame {
                     vnFormat.format(p.getPrice()),
                     p.getStock()
             });
+        }
+    }
+
+    private void showImage() {
+        int row = table.getSelectedRow();
+        if (row < 0) return;
+
+        int id = (int) tableModel.getValueAt(row, 0);
+
+        Product p = productDAO.getAll().stream()
+                .filter(x -> x.getId() == id)
+                .findFirst().orElse(null);
+
+        if (p == null || p.getImagePath() == null || p.getImagePath().isEmpty()) {
+            lblImage.setIcon(null);
+            lblImage.setText("Không có ảnh");
+            return;
+        }
+
+        try {
+            ImageIcon icon = new ImageIcon(p.getImagePath());
+            Image img = icon.getImage().getScaledInstance(
+                    lblImage.getWidth(),
+                    lblImage.getHeight(),
+                    Image.SCALE_SMOOTH
+            );
+            lblImage.setText("");
+            lblImage.setIcon(new ImageIcon(img));
+        } catch (Exception e) {
+            lblImage.setText("Không load được ảnh");
+            lblImage.setIcon(null);
         }
     }
 }

@@ -7,7 +7,7 @@ import util.DBConnection;
 
 public class ProductDAO {
 
-    // ========== GET ALL ==========
+    // ===== GET ALL =====
     public List<Product> getAll() {
         List<Product> list = new ArrayList<>();
         String sql = "SELECT * FROM PRODUCTS";
@@ -19,51 +19,66 @@ public class ProductDAO {
             while (rs.next()) {
                 list.add(map(rs));
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
         return list;
     }
 
-    // ========== GET BY CATEGORY ==========
-    public List<Product> getByCategory(int catId) {
+    // ===== GET BY CATEGORY =====
+    public List<Product> getByCategory(int categoryId) {
         List<Product> list = new ArrayList<>();
         String sql = "SELECT * FROM PRODUCTS WHERE id_category = ?";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setInt(1, catId);
+            ps.setInt(1, categoryId);
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
                 list.add(map(rs));
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
         return list;
     }
 
-    // ========== SEARCH ==========
+    // ===== SEARCH =====
     public List<Product> search(String keyword, Integer categoryId, Integer brandId) {
         List<Product> list = new ArrayList<>();
 
-        String sql = """
-            SELECT * FROM PRODUCTS
-            WHERE name_product LIKE ?
-              AND (? IS NULL OR id_category = ?)
-              AND (? IS NULL OR id_brand = ?)
-        """;
+        StringBuilder sql = new StringBuilder(
+            "SELECT * FROM PRODUCTS WHERE 1=1"
+        );
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append(" AND name_product LIKE ?");
+        }
+        if (categoryId != null) {
+            sql.append(" AND id_category = ?");
+        }
+        if (brandId != null) {
+            sql.append(" AND id_brand = ?");
+        }
 
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+             PreparedStatement ps = con.prepareStatement(sql.toString())) {
 
-            ps.setString(1, "%" + keyword + "%");
-            ps.setObject(2, categoryId);
-            ps.setObject(3, categoryId);
-            ps.setObject(4, brandId);
-            ps.setObject(5, brandId);
+            int index = 1;
+
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                ps.setString(index++, "%" + keyword + "%");
+            }
+            if (categoryId != null) {
+                ps.setInt(index++, categoryId);
+            }
+            if (brandId != null) {
+                ps.setInt(index++, brandId);
+            }
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
@@ -76,12 +91,12 @@ public class ProductDAO {
         return list;
     }
 
-    // ========== INSERT ==========
+    // ===== INSERT =====
     public void insert(Product p) {
         String sql = """
             INSERT INTO PRODUCTS
-            (name_product, description, price, stock, id_category, id_brand)
-            VALUES (?, ?, ?, ?, ?, ?)
+            (name_product, description, price, stock, id_category, id_brand, image_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """;
 
         try (Connection con = DBConnection.getConnection();
@@ -93,6 +108,8 @@ public class ProductDAO {
             ps.setInt(4, p.getStock());
             ps.setInt(5, p.getCategoryId());
             ps.setInt(6, p.getBrandId());
+            ps.setString(7, p.getImagePath());
+
             ps.executeUpdate();
 
         } catch (Exception e) {
@@ -100,12 +117,12 @@ public class ProductDAO {
         }
     }
 
-    // ========== UPDATE ==========
+    // ===== UPDATE =====
     public void update(Product p) {
         String sql = """
             UPDATE PRODUCTS
             SET name_product=?, description=?, price=?, stock=?,
-                id_category=?, id_brand=?
+                id_category=?, id_brand=?, image_path=?
             WHERE id_product=?
         """;
 
@@ -118,7 +135,9 @@ public class ProductDAO {
             ps.setInt(4, p.getStock());
             ps.setInt(5, p.getCategoryId());
             ps.setInt(6, p.getBrandId());
-            ps.setInt(7, p.getId());
+            ps.setString(7, p.getImagePath());
+            ps.setInt(8, p.getId());
+
             ps.executeUpdate();
 
         } catch (Exception e) {
@@ -126,9 +145,9 @@ public class ProductDAO {
         }
     }
 
-    // ========== DELETE ==========
+    // ===== DELETE =====
     public void delete(int id) {
-        String sql = "DELETE FROM PRODUCTS WHERE id_product=?";
+        String sql = "DELETE FROM PRODUCTS WHERE id_product = ?";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -141,7 +160,7 @@ public class ProductDAO {
         }
     }
 
-    // ========== UPDATE STOCK ==========
+    // ===== UPDATE STOCK =====
     public void updateStock(int productId, int qty) {
         String sql = "UPDATE PRODUCTS SET stock = stock - ? WHERE id_product = ?";
 
@@ -157,7 +176,7 @@ public class ProductDAO {
         }
     }
 
-    // ========== MAP ==========
+    // ===== MAP =====
     private Product map(ResultSet rs) throws SQLException {
         Product p = new Product();
         p.setId(rs.getInt("id_product"));
@@ -167,6 +186,7 @@ public class ProductDAO {
         p.setStock(rs.getInt("stock"));
         p.setCategoryId(rs.getInt("id_category"));
         p.setBrandId(rs.getInt("id_brand"));
+        p.setImagePath(rs.getString("image_path")); // ✅ giữ nguyên
         return p;
     }
 }

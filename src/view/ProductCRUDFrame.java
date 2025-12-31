@@ -2,168 +2,231 @@ package view;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 import java.text.NumberFormat;
-import java.util.List;
 import java.util.Locale;
 
 import dao.*;
 import model.*;
+import util.ImageUtil;
 
 public class ProductCRUDFrame extends JFrame {
 
     private JTable table;
-    private DefaultTableModel tableModel;
+    private DefaultTableModel model;
 
-    private JTextField txtId, txtName, txtDesc, txtPrice, txtStock, txtNewBrand;
+    private JTextField txtId, txtName, txtPrice, txtStock;
+    private JTextArea txtDesc;
     private JComboBox<Category> cboCategory;
     private JComboBox<Brand> cboBrand;
 
-    private JButton btnAdd, btnUpdate, btnDelete, btnClear, btnAddBrand;
+    private JLabel lblImage;
+    private String imagePath;
 
     private ProductDAO productDAO = new ProductDAO();
     private CategoryDAO categoryDAO = new CategoryDAO();
     private BrandDAO brandDAO = new BrandDAO();
 
-    private NumberFormat vnd = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+    private NumberFormat vnd =
+            NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
 
     public ProductCRUDFrame() {
-        setTitle("Quản lý Sản phẩm");
-        setSize(900, 520);
+        setTitle("Quản lý sản phẩm");
+        setSize(1000, 600);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(null);
 
         initUI();
-        loadCategories();
-        loadBrands();
+        loadCategory();
+        loadBrand();
         loadTable();
     }
 
     // ================= UI =================
     private void initUI() {
 
-        JLabel lblId = new JLabel("ID:");
-        JLabel lblName = new JLabel("Tên:");
-        JLabel lblDesc = new JLabel("Mô tả:");
-        JLabel lblPrice = new JLabel("Giá:");
-        JLabel lblStock = new JLabel("Tồn kho:");
-        JLabel lblCat = new JLabel("Danh mục:");
-        JLabel lblBrand = new JLabel("Hãng:");
-        JLabel lblNewBrand = new JLabel("Hãng mới:");
+        int x = 20, y = 20;
 
-        lblId.setBounds(20, 20, 100, 25);
-        lblName.setBounds(20, 50, 100, 25);
-        lblDesc.setBounds(20, 80, 100, 25);
-        lblPrice.setBounds(20, 110, 100, 25);
-        lblStock.setBounds(20, 140, 100, 25);
-        lblCat.setBounds(20, 170, 100, 25);
-        lblBrand.setBounds(20, 200, 100, 25);
-        lblNewBrand.setBounds(20, 230, 100, 25);
+        addLabel("ID:", x, y);
+        txtId = addText(x + 100, y, 120, false);
 
-        txtId = new JTextField();
-        txtId.setEnabled(false);
-        txtName = new JTextField();
-        txtDesc = new JTextField();
-        txtPrice = new JTextField();
-        txtStock = new JTextField();
-        txtNewBrand = new JTextField();
+        addLabel("Tên:", x, y += 35);
+        txtName = addText(x + 100, y, 250, true);
 
-        txtId.setBounds(120, 20, 150, 25);
-        txtName.setBounds(120, 50, 200, 25);
-        txtDesc.setBounds(120, 80, 300, 25);
-        txtPrice.setBounds(120, 110, 150, 25);
-        txtStock.setBounds(120, 140, 150, 25);
-        txtNewBrand.setBounds(120, 230, 200, 25);
+        addLabel("Giá:", x, y += 35);
+        txtPrice = addText(x + 100, y, 150, true);
 
+        addLabel("Tồn kho:", x, y += 35);
+        txtStock = addText(x + 100, y, 150, true);
+
+        addLabel("Danh mục:", x, y += 35);
         cboCategory = new JComboBox<>();
+        cboCategory.setBounds(x + 100, y, 200, 25);
+        add(cboCategory);
+
+        addLabel("Hãng:", x, y += 35);
         cboBrand = new JComboBox<>();
+        cboBrand.setBounds(x + 100, y, 200, 25);
+        add(cboBrand);
 
-        cboCategory.setBounds(120, 170, 200, 25);
-        cboBrand.setBounds(120, 200, 200, 25);
+        addLabel("Mô tả:", x, y += 35);
+        txtDesc = new JTextArea();
+        JScrollPane spDesc = new JScrollPane(txtDesc);
+        spDesc.setBounds(x + 100, y, 300, 70);
+        add(spDesc);
 
-        btnAddBrand = new JButton("Thêm hãng");
-        btnAddBrand.setBounds(330, 230, 100, 25);
+        // ===== IMAGE =====
+        lblImage = new JLabel();
+        lblImage.setBounds(20, 320, 250, 180);
+        lblImage.setBorder(BorderFactory.createTitledBorder("Ảnh sản phẩm"));
+        add(lblImage);
 
-        btnAdd = new JButton("Thêm");
-        btnUpdate = new JButton("Sửa");
-        btnDelete = new JButton("Xoá");
-        btnClear = new JButton("Làm mới");
+        JButton btnChooseImage = new JButton("Chọn ảnh");
+        btnChooseImage.setBounds(300, 350, 120, 30);
+        add(btnChooseImage);
 
-        btnAdd.setBounds(20, 270, 80, 30);
-        btnUpdate.setBounds(110, 270, 80, 30);
-        btnDelete.setBounds(200, 270, 80, 30);
-        btnClear.setBounds(290, 270, 90, 30);
+        // ===== BUTTON =====
+        JButton btnAdd = new JButton("Thêm");
+        JButton btnUpdate = new JButton("Sửa");
+        JButton btnDelete = new JButton("Xoá");
+        JButton btnClear = new JButton("Mới");
 
-        tableModel = new DefaultTableModel(
-                new Object[]{"ID", "Tên", "Mô tả", "Giá", "Tồn", "Danh mục", "Hãng"}, 0
+        btnAdd.setBounds(20, 520, 80, 30);
+        btnUpdate.setBounds(110, 520, 80, 30);
+        btnDelete.setBounds(200, 520, 80, 30);
+        btnClear.setBounds(290, 520, 80, 30);
+
+        add(btnAdd); add(btnUpdate);
+        add(btnDelete); add(btnClear);
+
+        // ===== TABLE =====
+        model = new DefaultTableModel(
+                new Object[]{"ID", "Tên", "Giá", "Tồn", "Danh mục", "Hãng"}, 0
         );
-        table = new JTable(tableModel);
+        table = new JTable(model);
         JScrollPane scroll = new JScrollPane(table);
-        scroll.setBounds(450, 20, 420, 420);
-
-        add(lblId); add(txtId);
-        add(lblName); add(txtName);
-        add(lblDesc); add(txtDesc);
-        add(lblPrice); add(txtPrice);
-        add(lblStock); add(txtStock);
-        add(lblCat); add(cboCategory);
-        add(lblBrand); add(cboBrand);
-        add(lblNewBrand); add(txtNewBrand); add(btnAddBrand);
-
-        add(btnAdd); add(btnUpdate); add(btnDelete); add(btnClear);
+        scroll.setBounds(450, 20, 520, 530);
         add(scroll);
 
-        // EVENTS
+        // ================= EVENTS =================
+        btnChooseImage.addActionListener(e -> chooseImage());
         btnAdd.addActionListener(e -> addProduct());
         btnUpdate.addActionListener(e -> updateProduct());
         btnDelete.addActionListener(e -> deleteProduct());
         btnClear.addActionListener(e -> clearForm());
-        btnAddBrand.addActionListener(e -> addNewBrand());
 
         table.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 int row = table.getSelectedRow();
-                txtId.setText(tableModel.getValueAt(row, 0).toString());
-                txtName.setText(tableModel.getValueAt(row, 1).toString());
-                txtDesc.setText(tableModel.getValueAt(row, 2).toString());
-                txtPrice.setText(tableModel.getValueAt(row, 3).toString().replaceAll("[^0-9]", ""));
-                txtStock.setText(tableModel.getValueAt(row, 4).toString());
-
-                selectCombo(cboCategory, tableModel.getValueAt(row, 5).toString());
-                selectCombo(cboBrand, tableModel.getValueAt(row, 6).toString());
+                fillForm(row);
             }
         });
     }
 
-    // ================= LOAD =================
-    private void loadCategories() {
-        cboCategory.removeAllItems();
-        for (Category c : categoryDAO.getAll()) {
-            cboCategory.addItem(c);
-        }
+    // ================= HELPER =================
+    private void addLabel(String text, int x, int y) {
+        JLabel lb = new JLabel(text);
+        lb.setBounds(x, y, 90, 25);
+        add(lb);
     }
 
-    private void loadBrands() {
+    private JTextField addText(int x, int y, int w, boolean enable) {
+        JTextField t = new JTextField();
+        t.setBounds(x, y, w, 25);
+        t.setEnabled(enable);
+        add(t);
+        return t;
+    }
+
+    // ================= LOAD =================
+    private void loadCategory() {
+        cboCategory.removeAllItems();
+        for (Category c : categoryDAO.getAll()) cboCategory.addItem(c);
+    }
+
+    private void loadBrand() {
         cboBrand.removeAllItems();
-        for (Brand b : brandDAO.getAll()) {
-            cboBrand.addItem(b);
-        }
+        for (Brand b : brandDAO.getAll()) cboBrand.addItem(b);
     }
 
     private void loadTable() {
-        tableModel.setRowCount(0);
+        model.setRowCount(0);
         for (Product p : productDAO.getAll()) {
-            tableModel.addRow(new Object[]{
+            model.addRow(new Object[]{
                     p.getId(),
                     p.getName(),
-                    p.getDescription(),
                     vnd.format(p.getPrice()),
                     p.getStock(),
                     getCategoryName(p.getCategoryId()),
                     getBrandName(p.getBrandId())
             });
         }
+    }
+
+    // ================= IMAGE =================
+    private void chooseImage() {
+        JFileChooser chooser = new JFileChooser();
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File file = chooser.getSelectedFile();
+            imagePath = ImageUtil.saveProductImage(
+                    file, "sp_" + System.currentTimeMillis()
+            );
+            showImage(imagePath);
+        }
+    }
+
+    private void showImage(String path) {
+        if (path == null) {
+            lblImage.setIcon(null);
+            return;
+        }
+        ImageIcon icon = new ImageIcon(path);
+        Image img = icon.getImage().getScaledInstance(
+                lblImage.getWidth(),
+                lblImage.getHeight(),
+                Image.SCALE_SMOOTH
+        );
+        lblImage.setIcon(new ImageIcon(img));
+    }
+
+    // ================= FORM =================
+    private void fillForm(int row) {
+        txtId.setText(model.getValueAt(row, 0).toString());
+        txtName.setText(model.getValueAt(row, 1).toString());
+
+        String price = model.getValueAt(row, 2).toString()
+                .replaceAll("[^0-9]", "");
+        txtPrice.setText(price);
+
+        txtStock.setText(model.getValueAt(row, 3).toString());
+
+        selectCombo(cboCategory, model.getValueAt(row, 4).toString());
+        selectCombo(cboBrand, model.getValueAt(row, 5).toString());
+
+        int id = Integer.parseInt(txtId.getText());
+        Product p = productDAO.getAll().stream()
+                .filter(x -> x.getId() == id)
+                .findFirst().orElse(null);
+
+        if (p != null) {
+            txtDesc.setText(p.getDescription());
+            imagePath = p.getImagePath();
+            showImage(imagePath);
+        }
+    }
+
+    private void clearForm() {
+        txtId.setText("");
+        txtName.setText("");
+        txtPrice.setText("");
+        txtStock.setText("");
+        txtDesc.setText("");
+        imagePath = null;
+        lblImage.setIcon(null);
+        table.clearSelection();
     }
 
     // ================= CRUD =================
@@ -187,67 +250,32 @@ public class ProductCRUDFrame extends JFrame {
     private void deleteProduct() {
         if (txtId.getText().isEmpty()) return;
         int id = Integer.parseInt(txtId.getText());
-        if (JOptionPane.showConfirmDialog(this, "Xoá sản phẩm này?",
-                "Xác nhận", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+        if (JOptionPane.showConfirmDialog(this,
+                "Xoá sản phẩm này?",
+                "Xác nhận",
+                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+
             productDAO.delete(id);
             loadTable();
             clearForm();
         }
     }
 
-    // ================= BRAND QUICK ADD =================
-    private void addNewBrand() {
-        String name = txtNewBrand.getText().trim();
-        if (name.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Nhập tên hãng mới");
-            return;
-        }
-        Brand b = new Brand();
-        b.setName(name);
-        brandDAO.insert(b);
-        loadBrands();
-        txtNewBrand.setText("");
-        JOptionPane.showMessageDialog(this, "Đã thêm hãng mới");
-    }
-
-    // ================= UTIL =================
     private Product getForm() {
         try {
-            String name = txtName.getText().trim();
-            String desc = txtDesc.getText().trim();
-            double price = Double.parseDouble(txtPrice.getText().trim());
-            int stock = Integer.parseInt(txtStock.getText().trim());
-            Category c = (Category) cboCategory.getSelectedItem();
-            Brand b = (Brand) cboBrand.getSelectedItem();
-
-            if (name.isEmpty() || desc.isEmpty() || c == null || b == null) {
-                JOptionPane.showMessageDialog(this, "Nhập đầy đủ thông tin");
-                return null;
-            }
-
             Product p = new Product();
-            p.setName(name);
-            p.setDescription(desc);
-            p.setPrice(price);
-            p.setStock(stock);
-            p.setCategoryId(c.getId());
-            p.setBrandId(b.getId());
+            p.setName(txtName.getText().trim());
+            p.setDescription(txtDesc.getText().trim());
+            p.setPrice(Double.parseDouble(txtPrice.getText()));
+            p.setStock(Integer.parseInt(txtStock.getText()));
+            p.setCategoryId(((Category) cboCategory.getSelectedItem()).getId());
+            p.setBrandId(((Brand) cboBrand.getSelectedItem()).getId());
+            p.setImagePath(imagePath);
             return p;
-
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Giá và tồn kho phải là số");
+            JOptionPane.showMessageDialog(this, "Dữ liệu không hợp lệ");
             return null;
         }
-    }
-
-    private void clearForm() {
-        txtId.setText("");
-        txtName.setText("");
-        txtDesc.setText("");
-        txtPrice.setText("");
-        txtStock.setText("");
-        txtNewBrand.setText("");
-        table.clearSelection();
     }
 
     private void selectCombo(JComboBox<?> cbo, String name) {
@@ -260,16 +288,14 @@ public class ProductCRUDFrame extends JFrame {
     }
 
     private String getCategoryName(int id) {
-        for (Category c : categoryDAO.getAll()) {
+        for (Category c : categoryDAO.getAll())
             if (c.getId() == id) return c.getName();
-        }
         return "";
     }
 
     private String getBrandName(int id) {
-        for (Brand b : brandDAO.getAll()) {
+        for (Brand b : brandDAO.getAll())
             if (b.getId() == id) return b.getName();
-        }
         return "";
     }
 }
